@@ -1,70 +1,77 @@
-<div id="top"></div>
+# ProjectCube
 
-## 使用技術一覧
+**現実空間とVR空間を使った、2人対戦ゲーム。**
 
-<!-- シールド一覧 -->
-<!-- 該当するプロジェクトの中から任意のものを選ぶ-->
-<p style="display: inline">
-  <!-- フレームワーク一覧 -->
-  <img alt="Static Badge" src="https://img.shields.io/badge/build-nothing-green?style=flat"> <img alt="Static Badge" src="https://img.shields.io/badge/-Unity-%23444444?logo=Unity">  <img alt="Static Badge" src="https://img.shields.io/badge/C%23-512BD4?logo=csharp"> <img alt="Static Badge" src="https://img.shields.io/badge/Mathematica-red">
-</p>
+ProjectCubeは、一辺約30cmのキューブ型デバイスとVR空間を組み合わせた、2人用の非対称対戦ゲームです。2人は同じ「キューブ」を異なる視点から体験します。
 
-## 目次
+- **VR側：** キューブ内部の仮想空間を探索し、妨害を乗り越えて脱出を目指す。
+- **現実側：** キューブ上部のモニターからVR側の状況を俯瞰し、側面の9個のボタンで妨害を仕掛ける。
 
-1. [プロジェクトについて](#プロジェクトについて)
-2. [環境](#環境)
-3. [環境構築](#環境構築)
-<!--4. [開発環境構築](#開発環境構築)-->
-<!--5. [トラブルシューティング](#トラブルシューティング)-->
+VR側の一人称視点と、現実側の俯瞰視点。**見えているものも、できることも違う2人の駆け引き**が特徴です。
 
-## プロジェクト名
+## ゲームの仕組み
 
-ProjectCubeのリポジトリ
+| VR側 | 現実側 |
+| --- | --- |
+| Meta Quest 3でキューブ内部の空間を体験 | 現実のキューブ型デバイスとモニターを操作 |
+| 移動やアクションでステージを攻略 | ボタン操作でVR側の進行を妨害 |
+| 妨害を避けながら脱出を目指す | 妨害を使い分けて脱出を阻止する |
 
-<!-- プロジェクトについて -->
+### 現実の操作がVR側に届く
 
-## プロジェクトについて
+キューブ型デバイスに組み込んだボタンの入力を、**Raspberry Pi Pico WとPCのシリアル通信**を通じてUnityへ伝えます。ゲーム側では階層・進行状況に応じた妨害処理に利用します。
 
-ProjectCubeはUnity 6000.0.24で開発された3Dゲームです。
-このゲームはリアルとバーチャルという異なる空間にいる二人のプレイヤーが、一辺30ｃｍのキューブ型デバイスを介して相互に干渉しながら対戦する新感覚ゲームです。
-Raspberry Pi Pico Wを用いてPCとシリアル通信を行っています。
+公開コードには、**照明の消灯・暴風・障害物**に関係する処理があり、時間経過による終了・再使用の制御も実装されています。
 
-<!-- プロジェクトの概要を記載 -->
+### 制作意図
 
-  <p align="left">
-    <br />
-    <!-- プロジェクト詳細にBacklogのWikiのリンク -->
-    <!--　<a href="Backlogのwikiリンク"><strong>プロジェクト詳細 »</strong></a>　-->
-    <br />
-    <br />
+物理的に触れられるキューブと、VRで体験するキューブを対応させることで、同じ空間を共有しながら異なる役割で対戦できる体験を目指しました。現実側はVR側の行動を俯瞰して妨害を考え、VR側はその妨害に対処しながら進みます。
 
-<p align="right">(<a href="#top">トップへ</a>)</p>
+## 実装・ソースコード
 
+技術面を詳しく知りたい場合は、[主要システムの解説](docs/implementation.md)をご覧ください。
 
-## 環境
+| システム | 主なソース | 内容 |
+| --- | --- | --- |
+| デバイス通信 | [SerialHandler.cs](Assets/Script/SerialHandler.cs) | シリアルポートを開き、受信情報をイベントで通知 |
+| 妨害・進行制御 | [GimmickController.cs](Assets/Script/GimmickController.cs) | ボタン入力を受け、照明・暴風・障害物の処理を切り替える |
+| 暴風の影響 | [WindBounce.cs](Assets/Script/WindBounce.cs) | パーティクル衝突時に対象へ力を加える |
+| 現実側の表示 | [MultiCameraDisplay.cs](Assets/Script/MultiCameraDisplay.cs) | PC画面の表示を三人称視点カメラに切り替える |
+| VR側のアクション | [GunShoot.cs](Assets/Script/GunShoot.cs)、[ShieldController.cs](Assets/Script/ShieldController.cs) | 射撃やシールドに関連する処理 |
+| ゲーム進行 | [Timer.cs](Assets/Script/Timer.cs) | カウントダウンと時間切れのシーン遷移 |
 
-<!-- 言語、フレームワーク、ミドルウェア、インフラの一覧とバージョンを記載 -->
+この表は公開されたスクリプトの実装内容に基づいています。個々のスクリプトがどのシーンで使用されるか、デバイス接続時の一連の挙動については、実機・Unity Editorでの確認が別途必要です。
 
-| フレームワーク  　　　|  バージョン  |
-| --------------------- | ------------ |
-| Unity                 | 6000.0.24f1  |
+## 開発環境
 
-|       アセット        |  バージョン  |
-| --------------------- | ------------ |
-|    Meta XR Core SDK   |    71.0.0    |
-|Meta XR Interaction ​SDK|    71.0.0    |
+| 項目 | 内容 |
+| --- | --- |
+| ゲームエンジン | **Unity 6000.0.24f1** |
+| プログラミング | C# |
+| VRデバイス | Meta Quest 3 |
+| VR関連 | Meta XR Core SDK 71.0.0 / Meta XR Interaction SDK 71.0.0 |
+| 描画 | Universal Render Pipeline 17.0.3 |
+| 入力 | Unity Input System 1.11.1 |
+| 物理デバイス | 約30cmのキューブ型デバイス / Raspberry Pi Pico W |
+| 通信 | PCとのシリアル通信 |
 
-その他のパッケージのバージョンは Unity内のパッケージマネージャーを確認してください
+Unityやパッケージのバージョンは、リポジトリ内の [ProjectVersion.txt](ProjectSettings/ProjectVersion.txt) と [manifest.json](Packages/manifest.json) に記録されています。
 
-<p align="right">(<a href="#top">トップへ</a>)</p>
+## リポジトリの構成
 
-<!-- 環境構築 -->
+- [Assets/Script](Assets/Script)：ゲームロジック、デバイス連携、VR操作などのC#スクリプト
+- [Assets/Scenes](Assets/Scenes)：開始画面、ステージ、クリア・ゲームオーバー画面などのシーン
+- [Assets](Assets)：シーンで使用するPrefab、モデル、演出素材など
+- [Packages](Packages)：Unityのパッケージ定義
+- [ProjectSettings](ProjectSettings)：Unityプロジェクト設定
+- [docs/implementation.md](docs/implementation.md)：主要な処理の解説
 
-## 環境構築
+本リポジトリにはUnityプロジェクトのファイルが含まれますが、**専用の物理デバイスやVR機器が必要なため、取得するだけで展示と同じ体験ができるものではありません。** 使用環境によっては、シリアルポートなどの設定変更も必要です。
 
-Project Settingsの左タブからPlayerを選択し、Other Settingを開きます。  
-そのうちの Api Comaptibility Level*  を  NET Framework  に変更してください
+## 制作について
 
-![スクリーンショット 2024-11-23 180444](https://github.com/user-attachments/assets/47c7c07e-a528-4ef2-beb9-e9d88496e546)
-![スクリーンショット 2024-11-23 181710](https://github.com/user-attachments/assets/20edc99b-4b3a-4254-b8fe-ae49209b1538)
+2024年9月から2025年9月にかけて、3人のチームで制作した作品です。作品のゲーム画面や動画など、視覚的な紹介は別のポートフォリオにまとめる方針のため、このREADMEではゲームの仕組みと実装の説明を中心にしています。
 
+## 権利・利用に関する注意
+
+プロジェクトにはMeta XR SDKなどの第三者製ソフトウェアや、外部アセットに由来する可能性のあるファイルが含まれています。**このリポジトリがPublicであることは、すべての素材やコードを自由に再配布・再利用できることを意味しません。** 個別のライセンス・公開条件を確認してください。
